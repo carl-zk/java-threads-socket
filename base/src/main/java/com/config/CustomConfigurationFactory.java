@@ -35,19 +35,16 @@ public class CustomConfigurationFactory extends ConfigurationFactory {
         //        appenderBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL).addAttribute("marker", "FLOW"));
         builder.add(stdoutAppenderBuilder);
 
-        AppenderComponentBuilder JSONLogfileAppenderBuilder = builder.newAppender("JSONLogfileAppender", "File")
+        AppenderComponentBuilder JSONLogfileAppenderBuilder = builder.newAppender("JSONLogfileAppender", "RandomAccessFile")
                 .addAttribute("fileName", "target/logfile.json")
-                .add(builder.newLayout("JSONLayout").addAttribute("compact", true).addAttribute("eventEol", true));
-//                .add(builder.newFilter("BurstFilter", Filter.Result.DENY, Filter.Result.NEUTRAL).addAttribute("level",Level.INFO).addAttribute("rate", 3).addAttribute("maxBurst", 10));
+                .addAttribute("immediateFlush", false)
+                .addAttribute("append", false);
+        JSONLogfileAppenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level %logger{36}: %msg%n%throwable"));
         builder.add(JSONLogfileAppenderBuilder);
-        AppenderComponentBuilder asyncComponentBuilder = builder.newAppender("AsyncAppender", "Async")
-                .addAttribute("bufferSize", 100);
-        asyncComponentBuilder.addComponent(builder.newAppenderRef("JSONLogfileAppender"));
-        builder.add(asyncComponentBuilder);
         // loggers
         //        builder.add(builder.newLogger("org.apache.logging.log4j", Level.INFO).add(builder.newAppenderRef("Stdout")).addAttribute("additivity", false));
         builder.add(builder.newLogger("Stdout", Level.TRACE).add(builder.newAppenderRef("Stdout")).addAttribute("additivity", false));
-        builder.add(builder.newAsyncLogger("jsonLogger", Level.INFO).add(builder.newAppenderRef("AsyncAppender")).addAttribute("additivity", false));
+        builder.add(builder.newAsyncLogger("jsonLogger", Level.INFO).add(builder.newAppenderRef("JSONLogfileAppender")).addAttribute("additivity", false));
         builder.add(builder.newRootLogger(Level.INFO).add(builder.newAppenderRef("Stdout")));
         return builder.build();
     }
