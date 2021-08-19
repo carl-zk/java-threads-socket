@@ -35,16 +35,29 @@ public class CustomConfigurationFactory extends ConfigurationFactory {
         //        appenderBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL).addAttribute("marker", "FLOW"));
         builder.add(stdoutAppenderBuilder);
 
-        AppenderComponentBuilder JSONLogfileAppenderBuilder = builder.newAppender("JSONLogfileAppender", "RandomAccessFile")
-                .addAttribute("fileName", "target/logfile.json")
+        AppenderComponentBuilder asyncAppenderBuilder = builder.newAppender("asyncAppender", "RandomAccessFile")
+                .addAttribute("fileName", "target/async.log")
                 .addAttribute("immediateFlush", false)
                 .addAttribute("append", false);
-        JSONLogfileAppenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level %logger{36}: %msg%n%throwable"));
-        builder.add(JSONLogfileAppenderBuilder);
+        asyncAppenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level %logger{36}: %msg%n%throwable"));
+        builder.add(asyncAppenderBuilder);
+
+        AppenderComponentBuilder rollingFileAppenderBuilder = builder.newAppender("rollingFileAppender", "RollingFile")
+                .addAttribute("fileName", "target/rolling.log")
+                .addAttribute("filePattern", "target/rolling-%d{MM-dd-yy}.log.gz")
+                .add(builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level: %msg%n%throwable"));
+        ComponentBuilder triggeringPolicies = builder.newComponent("Policies")
+                .addComponent(builder.newComponent("CronTriggeringPolicy")
+                        .addAttribute("schedule", "0 0 0 * * ?"))
+                .addComponent(builder.newComponent("SizeBasedTriggeringPolicy")
+                        .addAttribute("size", "100M"));
+        rollingFileAppenderBuilder.addComponent(triggeringPolicies);
+        builder.add(rollingFileAppenderBuilder);
         // loggers
         //        builder.add(builder.newLogger("org.apache.logging.log4j", Level.INFO).add(builder.newAppenderRef("Stdout")).addAttribute("additivity", false));
         builder.add(builder.newLogger("Stdout", Level.TRACE).add(builder.newAppenderRef("Stdout")).addAttribute("additivity", false));
-        builder.add(builder.newAsyncLogger("jsonLogger", Level.INFO).add(builder.newAppenderRef("JSONLogfileAppender")).addAttribute("additivity", false));
+        builder.add(builder.newAsyncLogger("asyncLogger", Level.INFO).add(builder.newAppenderRef("asyncAppender")).addAttribute("additivity", false));
+        builder.add(builder.newLogger("rollingFileLogger", Level.INFO).add(builder.newAppenderRef("rollingFileAppender")).addAttribute("additivity", false));
         builder.add(builder.newRootLogger(Level.INFO).add(builder.newAppenderRef("Stdout")));
         return builder.build();
     }

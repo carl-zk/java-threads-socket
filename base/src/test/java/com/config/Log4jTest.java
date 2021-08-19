@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -38,10 +39,10 @@ public class Log4jTest {
     }
 
     @Test
-    public void givenLoggerWithAsyncConfig_whenLogToJsonFile_thanOK() throws Exception {
-        Files.deleteIfExists(Paths.get("target/logfile.json"));
-        Files.createFile(Paths.get("target/logfile.json"));
-        Logger logger = LoggerFactory.getLogger("jsonLogger");
+    public void givenAsyncLogger_whenLogMany_thenNotFlushDirectly() throws Exception {
+        Files.deleteIfExists(Paths.get("target/async.log"));
+        Files.createFile(Paths.get("target/async.log"));
+        Logger logger = LoggerFactory.getLogger("asyncLogger");
 
         final int count = 88;
         for (int i = 0; i < count; i++) {
@@ -54,5 +55,16 @@ public class Log4jTest {
 
         long logEventsCount = Files.lines(Paths.get("target/logfile.json")).count();
         assertTrue(logEventsCount > 0 && logEventsCount <= count);
+    }
+
+    @Test
+    void givenLoggerRolling_whenLog_thenFlushDirectly() throws IOException {
+        Files.deleteIfExists(Paths.get("target/rolling.log"));
+        Logger logger = LoggerFactory.getLogger("rollingFileLogger");
+        logger.debug("debug");
+        logger.info("info");
+        logger.error("error");
+        long logEventsCount = Files.lines(Paths.get("target/rolling.log")).count();
+        assertTrue(logEventsCount == 2);
     }
 }
