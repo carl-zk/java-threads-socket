@@ -19,15 +19,18 @@ import java.net.URI;
 /**
  * @author carl
  */
-@Plugin(name = "CustomConfigurationFactory", category = ConfigurationFactory.CATEGORY)
+@Plugin(name = "Log4jConfigurationFactory", category = ConfigurationFactory.CATEGORY)
 @Order(Integer.MAX_VALUE)
-public class CustomConfigurationFactory extends ConfigurationFactory {
+public class Log4jConfigurationFactory extends ConfigurationFactory {
 
     static Configuration createConfiguration(final String name, ConfigurationBuilder<BuiltConfiguration> builder) {
         builder.setConfigurationName(name);
         builder.setStatusLevel(Level.WARN);
         //        builder.add(builder.newFilter("ThresholdFilter", Filter.Result.ACCEPT, Filter.Result.NEUTRAL).addAttribute("level", Level.INFO));
         // appenders
+        /**
+         * stdout
+         */
         AppenderComponentBuilder stdoutAppenderBuilder = builder.newAppender("Stdout", "CONSOLE").addAttribute("target", ConsoleAppender.Target.SYSTEM_OUT);
         stdoutAppenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern", "%style{%date{DEFAULT}}{yellow} " +
                 "%highlight{%-5level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green} " +
@@ -35,6 +38,9 @@ public class CustomConfigurationFactory extends ConfigurationFactory {
         //        appenderBuilder.add(builder.newFilter("MarkerFilter", Filter.Result.DENY, Filter.Result.NEUTRAL).addAttribute("marker", "FLOW"));
         builder.add(stdoutAppenderBuilder);
 
+        /**
+         * async
+         */
         AppenderComponentBuilder asyncAppenderBuilder = builder.newAppender("asyncAppender", "RandomAccessFile")
                 .addAttribute("fileName", "target/async.log")
                 .addAttribute("immediateFlush", false)
@@ -42,6 +48,9 @@ public class CustomConfigurationFactory extends ConfigurationFactory {
         asyncAppenderBuilder.add(builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level %logger{36}: %msg%n%throwable"));
         builder.add(asyncAppenderBuilder);
 
+        /**
+         * rolling
+         */
         AppenderComponentBuilder rollingFileAppenderBuilder = builder.newAppender("rollingFileAppender", "RollingFile")
                 .addAttribute("fileName", "target/rolling.log")
                 .addAttribute("filePattern", "target/rolling-%d{MM-dd-yy}.log.gz")
@@ -53,11 +62,20 @@ public class CustomConfigurationFactory extends ConfigurationFactory {
                         .addAttribute("size", "100M"));
         rollingFileAppenderBuilder.addComponent(triggeringPolicies);
         builder.add(rollingFileAppenderBuilder);
+
+        /**
+         * file
+         */
+        AppenderComponentBuilder fileAppenderBuilder = builder.newAppender("fileAppender", "File")
+                .addAttribute("fileName", "target/file.log")
+                .add(builder.newLayout("PatternLayout").addAttribute("pattern", "%d [%t] %-5level: %msg%n%throwable"));
+        builder.add(fileAppenderBuilder);
         // loggers
         //        builder.add(builder.newLogger("org.apache.logging.log4j", Level.INFO).add(builder.newAppenderRef("Stdout")).addAttribute("additivity", false));
         builder.add(builder.newLogger("Stdout", Level.TRACE).add(builder.newAppenderRef("Stdout")).addAttribute("additivity", false));
         builder.add(builder.newAsyncLogger("asyncLogger", Level.INFO).add(builder.newAppenderRef("asyncAppender")).addAttribute("additivity", false));
         builder.add(builder.newLogger("rollingFileLogger", Level.INFO).add(builder.newAppenderRef("rollingFileAppender")).addAttribute("additivity", false));
+        builder.add(builder.newLogger("fileLogger", Level.INFO).add(builder.newAppenderRef("fileAppender")).addAttribute("additivity", false));
         builder.add(builder.newRootLogger(Level.INFO).add(builder.newAppenderRef("Stdout")));
         return builder.build();
     }
