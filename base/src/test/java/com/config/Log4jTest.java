@@ -1,8 +1,15 @@
 package com.config;
 
-import org.apache.logging.log4j.core.async.AsyncLogger;
-import org.apache.logging.log4j.core.async.AsyncLoggerConfig;
-import org.apache.logging.log4j.core.async.AsyncLoggerContext;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.AppenderRef;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,5 +73,34 @@ public class Log4jTest {
         logger.error("error");
         long logEventsCount = Files.lines(Paths.get("target/rolling.log")).count();
         assertTrue(logEventsCount == 2);
+    }
+
+    @Test
+    void givenRunningContext_whenChangeLogger_thenRefresh() {
+        Logger logger = LoggerFactory.getLogger("file2Logger");
+        logger.info("this message won't be logged in file");
+        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        final Configuration config = ctx.getConfiguration();
+        // @formatter:off
+        FileAppender appender = FileAppender.newBuilder().withFileName("target/dynamic.log").withAppend(false)
+                .withLocking(false).withImmediateFlush(true)
+                .withBufferedIo(false).withBufferSize(4000).withAdvertise(false)
+                .setName("File2")
+                .setIgnoreExceptions(false)
+                .setConfiguration(config)
+                .setLayout(PatternLayout.createDefaultLayout(config))
+                .build();
+        // @formatter:on
+        appender.start();
+        config.addAppender(appender);
+        AppenderRef ref = AppenderRef.createAppenderRef("File", null, null);
+        AppenderRef[] refs = new AppenderRef[]{ref};
+        LoggerConfig loggerConfig = LoggerConfig.createLogger(false, Level.INFO, "file2Logger", "true", refs, null, config, null);
+        loggerConfig.addAppender(appender, null, null);
+        config.addLogger("file2Logger", loggerConfig);
+        ctx.updateLoggers();
+
+        logger.info("this message will be logged");
+        LoggerFactory.getLogger("fileLogger").info("other loggers still exist");
     }
 }
