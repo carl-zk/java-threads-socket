@@ -18,4 +18,8 @@ public abstract class Util {
         // Aug 21, 2021 2:01:43 PM CST
         System.out.println(Util.getStdmfDateTime());
     }
+
+    public static boolean strIsNotEmpty(String s) {
+        return s != null && s.length() > 0;
+    }
 }
