@@ -7,6 +7,7 @@ import util.StreamUtil;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -34,10 +35,12 @@ public class MultiFileClient {
             socket = new Socket("127.0.0.1", 9000);
             sr = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             bos = new BufferedOutputStream(socket.getOutputStream());
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 1; i++) {
                 String fn = String.format("f%d.text", i);
-                bis = new BufferedInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(fn)));
+                bis = new BufferedInputStream(new FileInputStream("/Users/carl/Downloads/Spider-Man.Into the Spider-Verse.2019.1080p.WEB-DL.H264.AC3-EVO[EtHD]/Spider-Man.Into the Spider-Verse.2019.1080p.WEB-DL.H264.AC3-EVO[EtHD].mkv"));
+//                bis = new BufferedInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(fn)));
                 try {
+                    // 文件大小超过 Integer.MAX_VALUE 就会报错
                     int t = bis.available(), r = 0;
                     logger.info("Send file {}, size = {}", fn, t);
                     bos.write(intToByteArray(t));
