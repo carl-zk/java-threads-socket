@@ -32,7 +32,8 @@ public class Server implements Runnable {
         try {
             while ((socket = serverSocket.accept()) != null) {
                 logger.info("Client {} connected", socket.getRemoteSocketAddress());
-                threadPool.execute(new Processor(socket));
+//                threadPool.execute(new Processor(socket));
+                threadPool.execute(new MultiFileProcessor(socket));
             }
         } catch (IOException e) {
             logger.error("error on process connection", e);
