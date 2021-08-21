@@ -8,8 +8,10 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.ConfigurationFactory;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author carl
  */
 public class Log4jTest {
+
+    @BeforeAll
+    public static void init() {
+        ConfigurationFactory.setConfigurationFactory(new Log4jConfigurationFactory());
+    }
 
     @Test
     void givenStdoutLogger_whenLogTrace_thenOK() {
@@ -60,12 +67,12 @@ public class Log4jTest {
         //        AsyncLoggerContext.getContext().terminate();
         TimeUnit.SECONDS.sleep(1);
 
-        long logEventsCount = Files.lines(Paths.get("target/logfile.json")).count();
+        long logEventsCount = Files.lines(Paths.get("target/async.log")).count();
         assertTrue(logEventsCount > 0 && logEventsCount <= count);
     }
 
     @Test
-    void givenLoggerRolling_whenLog_thenFlushDirectly() throws IOException {
+    public void givenLoggerRolling_whenLog_thenFlushDirectly() throws IOException {
         Files.deleteIfExists(Paths.get("target/rolling.log"));
         Logger logger = LoggerFactory.getLogger("rollingFileLogger");
         logger.debug("debug");
